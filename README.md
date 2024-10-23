@@ -47,3 +47,5 @@ docker-compose up -d
 6. URL: http://your-ip:3001
 7. Authorization Header Value: whatever, but not blank, for example 00000
 8. Save
+![obraz](https://github.com/user-attachments/assets/39ab7936-0b48-4a61-b418-840d02855522)
+
