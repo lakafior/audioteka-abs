@@ -1,0 +1,8 @@
+---
+services:
+  audioteka-abs:
+    image: fisiu82/audioteka-abs
+    container_name: audioteka-abs
+    restart: unless-stopped
+    ports:
+      - "3001:3001"
