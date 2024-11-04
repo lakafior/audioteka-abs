@@ -1,5 +1,7 @@
 # audioteka-abs
-Audiobookshelf Custom Metadata Provider for Audioteka.com
+Audiobookshelf Custom Metadata Provider for Audioteka.com. 
+
+Docker hub page: https://hub.docker.com/r/lakafior/audioteka-abs
 
 ## Screenshots
 
@@ -24,16 +26,9 @@ Audiobookshelf Custom Metadata Provider for Audioteka.com
 
 # Instructions
 
-## How to run
-1. Copy this repo:
-```
-git clone https://github.com/lakafior/audioteka-abs.git
-```
-2. Move inside directory:
-```
-cd audioteka-abs
-```
-3. Build Docker container using docker-compose:
+## How to run:
+1. Copy compose.yml
+2. Run
 ```
 docker-compose up -d
 ```
