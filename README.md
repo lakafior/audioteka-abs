@@ -27,10 +27,50 @@ Docker hub page: https://hub.docker.com/r/lakafior/audioteka-abs
 # Instructions
 
 ## How to run:
-1. Copy compose.yml
-2. Run
+
+### Prerequisites:
+Docker and Docker Compose installed on your system
+
+### Setup and Running:
+1. Create a compose.yml file in your desired directory with the following content:
+```
+---
+services:
+  audioteka-abs:
+    image: lakafior/audioteka-abs
+    container_name: audioteka-abs
+    restart: unless-stopped
+    ports:
+      - "3001:3001"
+```
+2. Pull the latest Docker image:
+```
+docker-compose pull
+```
+3. Start the application:
 ```
 docker-compose up -d
+```
+
+### Updating the Application:
+To update to the latest version:
+```
+docker-compose pull
+```
+```
+docker-compose up -d
+```
+
+### To stop the application:
+
+```
+docker-compose down
+```
+
+### To view logs:
+
+```
+docker-compose logs -f
 ```
 
 ## How to use
