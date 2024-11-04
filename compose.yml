@@ -1,7 +1,7 @@
 ---
 services:
   audioteka-abs:
-    image: fisiu82/audioteka-abs
+    image: lakafior/audioteka-abs
     container_name: audioteka-abs
     restart: unless-stopped
     ports:
