@@ -33,7 +33,7 @@ jobs:
       if: github.event_name != 'pull_request'
       uses: docker/metadata-action@v5
       with:
-        images: fisiu82/audioteka-abs
+        images: lakafior/audioteka-abs
         tags: latest
 
     - name: Build and push Docker image
