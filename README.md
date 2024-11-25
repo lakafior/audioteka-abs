@@ -1,5 +1,6 @@
 # audioteka-abs
 Audiobookshelf Custom Metadata Provider for Audioteka.com. 
+Right now it's supporting Polish and Czech sites.
 
 Docker hub page: https://hub.docker.com/r/lakafior/audioteka-abs
 
@@ -32,16 +33,29 @@ Docker hub page: https://hub.docker.com/r/lakafior/audioteka-abs
 Docker and Docker Compose installed on your system
 
 ### Setup and Running:
-1. Create a compose.yml file in your desired directory with the following content:
+1. Create or copy from girhub a compose.yml file in your desired directory with the following content.
 ```
 ---
 services:
   audioteka-abs:
     image: lakafior/audioteka-abs
     container_name: audioteka-abs
+    environment:
+      - LANGUAGE=pl
     restart: unless-stopped
     ports:
       - "3001:3001"
+```
+#### For Czech users
+Change enviorment line with language in compose.yml from
+```
+    environment:
+      - LANGUAGE=pl
+```
+to
+```
+    environment:
+      - LANGUAGE=cz
 ```
 2. Pull the latest Docker image:
 ```
@@ -51,6 +65,7 @@ docker-compose pull
 ```
 docker-compose up -d
 ```
+
 
 ### Updating the Application:
 To update to the latest version:
