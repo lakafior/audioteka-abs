@@ -3,6 +3,8 @@ services:
   audioteka-abs:
     image: lakafior/audioteka-abs
     container_name: audioteka-abs
+    environment:
+      - LANGUAGE=pl
     restart: unless-stopped
     ports:
       - "3001:3001"
