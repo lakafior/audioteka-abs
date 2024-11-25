@@ -19,12 +19,14 @@ app.use((req, res, next) => {
   next();
 });
 
+const language = process.env.LANGUAGE || 'pl';  // Default to Polish if not specified
+
 class AudiotekaProvider {
   constructor() {
     this.id = 'audioteka';
     this.name = 'Audioteka';
     this.baseUrl = 'https://audioteka.com';
-    this.searchUrl = 'https://audioteka.com/pl/search';
+    this.searchUrl = language === 'cz' ? 'https://audioteka.com/cz/vyhledavani' : 'https://audioteka.com/pl/szukaj';
   }
 
   async searchBooks(query, author = '') {
@@ -84,21 +86,33 @@ class AudiotekaProvider {
       const $ = cheerio.load(response.data);
 
       // Get narrator from the "Głosy" row in the details table
-      const narrator = $('tr:contains("Głosy") td:last-child a').text().trim();
-
+      const narrator = language === 'cz' 
+        ? $('tr:contains("Interpret") td:last-child a').text().trim() 
+        : $('tr:contains("Głosy") td:last-child a').text().trim();
+  
       // Get duration from the "Długość" row
-      const duration = $('tr:contains("Długość") td:last-child').text().trim();
+      const duration = language === 'cz' 
+        ? $('tr:contains("Délka") td:last-child a').text().trim() 
+        : $('tr:contains("Długość") td:last-child a').text().trim();
 
       // Get publisher from the "Wydawca" row
-      const publisher = $('tr:contains("Wydawca") td:last-child a').text().trim();
+      const publisher = language === 'cz'  
+        ? $('tr:contains("Vydavatel") td:last-child a').text().trim()
+        : $('tr:contains("Wydawca") td:last-child a').text().trim();
 
       // Get type from the "Typ" row
-      const type = $('tr:contains("Typ") td:last-child').text().trim();
+      const type = language === 'cz' 
+        ? $('tr:contains("Typ") td:last-child').text().trim()
+        : $('tr:contains("Typ") td:last-child').text().trim()
 
       // Get categories/genres
-      const genres = $('tr:contains("Kategoria") td:last-child a')
-        .map((i, el) => $(el).text().trim())
-        .get();
+      const genres = language === 'cz'
+        ? $('tr:contains("Kategorie") td:last-child a')
+            .map((i, el) => $(el).text().trim())
+            .get()
+        : $('tr:contains("Kategoria") td:last-child a')
+            .map((i, el) => $(el).text().trim())
+            .get();
 
       // Get series information
       const series = $('.Collections__CollectionList-sc-cd06413d-1 a')
@@ -111,6 +125,10 @@ class AudiotekaProvider {
       // Get main cover image
       const cover = $('.ProductTop-styled__Cover-sc-aae7c7ba-0').attr('src') || match.cover;
 
+      const languages = language === 'cz' 
+      ? ['czech'] 
+      : ['polish']
+
       const fullMetadata = {
         ...match,
         cover,
@@ -121,7 +139,7 @@ class AudiotekaProvider {
         genres,
         series: series.length > 0 ? series[0] : undefined, // Taking first series if multiple exist
         rating,
-        languages: ['pol'], // Assuming Polish language for Audioteka
+        languages, 
         identifiers: {
           audioteka: match.id,
         },
@@ -184,5 +202,5 @@ app.get('/search', async (req, res) => {
 });
 
 app.listen(port, () => {
-  console.log(`Audioteka provider listening on port ${port}`);
+  console.log(`Audioteka provider listening on port ${port} and language is set to ${language}`);
 });
