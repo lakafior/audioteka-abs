@@ -22,6 +22,7 @@ Docker hub page: https://hub.docker.com/r/lakafior/audioteka-abs
 - Series
 - Genres
 - Language
+- Description
 - **Lectors**
 - **Audiobook cover**
 
