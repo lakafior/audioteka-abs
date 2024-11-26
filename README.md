@@ -12,7 +12,7 @@ Docker hub page: https://hub.docker.com/r/lakafior/audioteka-abs
 
 
 ### View of matched data
-![obraz](https://github.com/user-attachments/assets/5fd7bc59-e43a-497d-adb6-a4563b217a36)
+![obraz](https://github.com/user-attachments/assets/68828be1-fc74-4c08-b44b-b6977c497df4)
 
 ## Fetching features:
 - Cover
