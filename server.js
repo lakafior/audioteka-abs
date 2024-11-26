@@ -86,9 +86,15 @@ class AudiotekaProvider {
       const $ = cheerio.load(response.data);
 
       // Get narrator from the "Głosy" row in the details table
-      const narrator = language === 'cz' 
-        ? $('tr:contains("Interpret") td:last-child a').text().trim() 
-        : $('tr:contains("Głosy") td:last-child a').text().trim();
+      const narrators = language === 'cz' 
+      ? $('tr:contains("Interpret") td:last-child a')
+        .map((i, el) => $(el).text().trim())
+        .get()
+        .join(', ')
+      : $('tr:contains("Głosy") td:last-child a')
+        .map((i, el) => $(el).text().trim())
+        .get()
+        .join(', ');
   
       // Get duration from the "Długość" row
       const duration = language === 'cz' 
@@ -121,6 +127,12 @@ class AudiotekaProvider {
 
       // Get rating
       const rating = parseFloat($('.StarIcon__Label-sc-96b8391b-2').text().trim()) || null;
+      
+      // Get description
+      const description = $('.description_description__6gcfq p')
+        .map((i, el) => $(el).text().trim())
+        .get()
+        .join('\n\n');
 
       // Get main cover image
       const cover = $('.ProductTop-styled__Cover-sc-aae7c7ba-0').attr('src') || match.cover;
@@ -132,9 +144,10 @@ class AudiotekaProvider {
       const fullMetadata = {
         ...match,
         cover,
-        narrator,
+        narrator: narrators,
         duration,
         publisher,
+        description,
         type,
         genres,
         series: series.length > 0 ? series[0] : undefined, // Taking first series if multiple exist
