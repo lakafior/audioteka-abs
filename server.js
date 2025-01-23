@@ -40,17 +40,17 @@ class AudiotekaProvider {
       console.log('Search URL:', searchUrl);
 
       const matches = [];
-      const $books = $('.adtk-item.teaser_teaser__kRYek');
+      const $books = $('.adtk-item.teaser_teaser__FDajW');
       console.log('Number of books found:', $books.length);
 
       $books.each((index, element) => {
         const $book = $(element);
         
-        const title = $book.find('.teaser_title__CZ9eq').text().trim();
-        const bookUrl = this.baseUrl + $book.find('.teaser_mainLink__YBhax').attr('href');
-        const authors = [$book.find('.teaser_author__BV8Ke').text().trim()];
-        const cover = $book.find('.teaser_cover__2EVLn').attr('src');
-        const rating = parseFloat($book.find('.teaser_rating__ksFn3').text().trim()) || null;
+        const title = $book.find('.teaser_title__hDeCG').text().trim();
+        const bookUrl = this.baseUrl + $book.find('.teaser_mainLink__gPrWR').attr('href');
+        const authors = [$book.find('.teaser_author__LWTRi').text().trim()];
+        const cover = $book.find('.teaser_cover___S22h').attr('src');
+        const rating = parseFloat($book.find('.teaser_rating__u6qUW').text().trim()) || null;
 
         const id = $book.attr('data-item-id') || bookUrl.split('/').pop();
 
@@ -121,12 +121,12 @@ class AudiotekaProvider {
             .get();
 
       // Get series information
-      const series = $('.Collections__CollectionList-sc-cd06413d-1 a')
+      const series = $('.Collections__CollectionList-sc-855d4c15-1 a')
         .map((i, el) => $(el).text().trim())
         .get();
 
       // Get rating
-      const rating = parseFloat($('.StarIcon__Label-sc-96b8391b-2').text().trim()) || null;
+      const rating = parseFloat($('.StarIcon__Label-sc-6cf2a375-2').text().trim()) || null;
       
       // Get description
       const description = $('.description_description__6gcfq p')
