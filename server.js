@@ -129,10 +129,16 @@ class AudiotekaProvider {
       const rating = parseFloat($('.StarIcon__Label-sc-6cf2a375-2').text().trim()) || null;
       
       // Get description
-      const description = $('.description_description__6gcfq p')
+      const rawDescription = $('.description_description__6gcfq p')
         .map((i, el) => $(el).text().trim())
         .get()
         .join('\n\n');
+
+      // Create the HTML link
+      const audioTekaLink = `<a href="${match.url}">Audioteka link</a>`;
+
+      // Combine the link and the description
+      const description = `${audioTekaLink}\n\n${rawDescription}`;
 
       // Get main cover image
       const cover = $('.ProductTop-styled__Cover-sc-aae7c7ba-0').attr('src') || match.cover;
