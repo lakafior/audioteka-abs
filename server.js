@@ -121,24 +121,26 @@ class AudiotekaProvider {
             .get();
 
       // Get series information
-      const series = $('.Collections__CollectionList-sc-855d4c15-1 a')
+      const series = $('.collections_list__09q3I li a')
         .map((i, el) => $(el).text().trim())
         .get();
 
       // Get rating
       const rating = parseFloat($('.StarIcon__Label-sc-6cf2a375-2').text().trim()) || null;
       
-      // Get description
-      const rawDescription = $('.description_description__6gcfq p')
-        .map((i, el) => $(el).text().trim())
-        .get()
-        .join('\n\n');
+      // Get description with HTML
+      const descriptionHtml = $('.description_description__6gcfq').html();
+      
+      // Basic sanitization (you might want to use a proper HTML sanitizer library for production)
+      const sanitizedDescription = descriptionHtml
+        .replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '')
+        .replace(/<iframe\b[^<]*(?:(?!<\/iframe>)<[^<]*)*<\/iframe>/gi, '');
 
       // Create the HTML link
       const audioTekaLink = `<a href="${match.url}">Audioteka link</a>`;
 
       // Combine the link and the description
-      const description = `${audioTekaLink}\n\n${rawDescription}`;
+      const description = `${audioTekaLink}<br><br>${sanitizedDescription}`;
 
       // Get main cover image
       const cover = $('.ProductTop-styled__Cover-sc-aae7c7ba-0').attr('src') || match.cover;
@@ -156,7 +158,8 @@ class AudiotekaProvider {
         description,
         type,
         genres,
-        series: series.length > 0 ? series[0] : undefined, // Taking first series if multiple exist
+        // series: series.length > 0 ? series[0] : undefined, // Taking first series if multiple exist
+        series,
         rating,
         languages, 
         identifiers: {
@@ -203,10 +206,10 @@ app.get('/search', async (req, res) => {
         asin: book.identifiers?.asin || undefined,
         genres: book.genres || undefined,
         tags: book.tags || undefined,
-        series: book.series ? [{
-          series: book.series,
-          sequence: undefined // Audioteka doesn't seem to provide sequence numbers
-        }] : undefined,
+        series: book.series ? book.series.map(seriesName => ({
+          series: seriesName,
+          sequence: undefined // Audioteka doesn't provide sequence numbers
+        })) : undefined,
         language: book.languages && book.languages.length > 0 ? book.languages[0] : undefined,
         duration: book.duration || undefined
       }))
