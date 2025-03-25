@@ -19,6 +19,7 @@ jobs:
       uses: actions/checkout@v4
 
     - name: Set up Docker Buildx
+      id: buildx
       uses: docker/setup-buildx-action@v3
 
     - name: Login to Docker Hub
@@ -44,3 +45,6 @@ jobs:
         push: ${{ github.event_name != 'pull_request' }}
         tags: ${{ steps.meta.outputs.tags }}
         labels: ${{ steps.meta.outputs.labels }}
+        platforms: linux/amd64,linux/arm64,linux/arm/v7 
+        build-args: 
+        builder: ${{ steps.buildx.outputs.name }} 
