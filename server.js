@@ -49,7 +49,7 @@ class AudiotekaProvider {
         const title = $book.find('.teaser_title__hDeCG').text().trim();
         const bookUrl = this.baseUrl + $book.find('.teaser_mainLink__gPrWR').attr('href');
         const authors = [$book.find('.teaser_author__LWTRi').text().trim()];
-        const cover = $book.find('.teaser_cover___S22h').attr('src');
+        const cover = $book.find('.cover_image__LbEx_').attr('src');
         const rating = parseFloat($book.find('.teaser_rating__u6qUW').text().trim()) || null;
 
         const id = $book.attr('data-item-id') || bookUrl.split('/').pop();
@@ -143,7 +143,7 @@ class AudiotekaProvider {
       const description = `${audioTekaLink}<br><br>${sanitizedDescription}`;
 
       // Get main cover image
-      const cover = $('.ProductTop-styled__Cover-sc-aae7c7ba-0').attr('src') || match.cover;
+      const cover = $('.product-top_cover__Pth8B').attr('src') || match.cover;
 
       const languages = language === 'cz' 
       ? ['czech'] 
