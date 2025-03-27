@@ -159,7 +159,8 @@ class AudiotekaProvider {
         type,
         genres,
         // series: series.length > 0 ? series[0] : undefined, // Taking first series if multiple exist
-        series,
+        series: [],
+        tags: series,
         rating,
         languages, 
         identifiers: {
