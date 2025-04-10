@@ -34,7 +34,12 @@ class AudiotekaProvider {
       console.log(`Searching for: "${query}" by "${author}"`);
       const searchUrl = `${this.searchUrl}?query=${encodeURIComponent(query)}`;
       
-      const response = await axios.get(searchUrl);
+      const response = await axios.get(searchUrl, {
+        headers: {
+          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
+          'Accept-Language': language === 'cz' ? 'cs-CZ' : 'pl-PL'
+        }
+      });
       const $ = cheerio.load(response.data);
 
       console.log('Search URL:', searchUrl);
