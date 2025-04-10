@@ -47,10 +47,10 @@ class AudiotekaProvider {
         const $book = $(element);
         
         const title = $book.find('.teaser_title__hDeCG').text().trim();
-        const bookUrl = this.baseUrl + $book.find('.teaser_mainLink__gPrWR').attr('href');
+        const bookUrl = this.baseUrl + $book.find('.teaser_link__fxVFQ').attr('href');
         const authors = [$book.find('.teaser_author__LWTRi').text().trim()];
-        const cover = $book.find('.cover_image__LbEx_').attr('src');
-        const rating = parseFloat($book.find('.teaser_rating__u6qUW').text().trim()) || null;
+        const cover = $book.find('.teaser_coverImage__YMrBt').attr('src');
+        const rating = parseFloat($book.find('.teaser-footer_rating__TeVOA').text().trim()) || null;
 
         const id = $book.attr('data-item-id') || bookUrl.split('/').pop();
 
