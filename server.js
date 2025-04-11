@@ -3,6 +3,13 @@ const axios = require('axios');
 const cheerio = require('cheerio');
 const cors = require('cors');
 
+function cleanCoverUrl(url) {
+  if (url) {
+    return url.split('?')[0];
+  }
+  return url;
+}
+
 const app = express();
 const port = process.env.PORT || 3001;
 
@@ -14,8 +21,7 @@ app.use((req, res, next) => {
   if (!apiKey) {
     return res.status(401).json({ error: 'Unauthorized' });
   }
-  // Here you would typically validate the API key
-  // For now, we'll just pass it through
+  // part to validate API
   next();
 });
 
@@ -54,7 +60,7 @@ class AudiotekaProvider {
         const title = $book.find('.teaser_title__hDeCG').text().trim();
         const bookUrl = this.baseUrl + $book.find('.teaser_link__fxVFQ').attr('href');
         const authors = [$book.find('.teaser_author__LWTRi').text().trim()];
-        const cover = $book.find('.teaser_coverImage__YMrBt').attr('src');
+        const cover = cleanCoverUrl($book.find('.teaser_coverImage__YMrBt').attr('src'));
         const rating = parseFloat($book.find('.teaser-footer_rating__TeVOA').text().trim()) || null;
 
         const id = $book.attr('data-item-id') || bookUrl.split('/').pop();
@@ -120,8 +126,7 @@ class AudiotekaProvider {
       const genres = language === 'cz'
         ? $('tr:contains("Kategorie") td:last-child a')
             .map((i, el) => $(el).text().trim())
-            .get()
-        : $('tr:contains("Kategoria") td:last-child a')
+            .get(): $('tr:contains("Kategoria") td:last-child a')
             .map((i, el) => $(el).text().trim())
             .get();
 
@@ -147,8 +152,8 @@ class AudiotekaProvider {
       // Combine the link and the description
       const description = `${audioTekaLink}<br><br>${sanitizedDescription}`;
 
-      // Get main cover image
-      const cover = $('.product-top_cover__Pth8B').attr('src') || match.cover;
+      // Get main cover image and clean the URL
+      const cover = cleanCoverUrl($('.product-top_cover__Pth8B').attr('src') || match.cover);
 
       const languages = language === 'cz' 
       ? ['czech'] 
@@ -163,7 +168,6 @@ class AudiotekaProvider {
         description,
         type,
         genres,
-        // series: series.length > 0 ? series[0] : undefined, // Taking first series if multiple exist
         series: [],
         tags: series,
         rating,
