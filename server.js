@@ -16,23 +16,22 @@ function parseDuration(durationStr) {
   let hours = 0;
   let minutes = 0;
 
-  // Use the regex provided by the user
-  const durationRegex = /^(?:(\d+)\s+[^\d\s]+)?\s*(?:(\d+)\s+[^\d\s]+)$/gm;
-  // Reset lastIndex for global regex if used multiple times (though match doesn't strictly need it here)
-  durationRegex.lastIndex = 0; 
+  // Use the regex provided by the user, REMOVED 'g' and 'm' flags
+  const durationRegex = /^(?:(\d+)\s+[^\d\s]+)?\s*(?:(\d+)\s+[^\d\s]+)$/; 
+  // No need to reset lastIndex without the 'g' flag
   const matches = durationStr.match(durationRegex);
 
   // Check if the regex matched successfully
-  if (matches) {
-    // Note: With this regex, matches[0] is the full match, 
-    // matches[1] is the hours capture group (optional), 
-    // matches[2] is the minutes capture group (mandatory if matched).
-    // We need to handle the case where hours (matches[1]) might be undefined.
+  // Without 'g', matches will be null if no match, or an array like:
+  // [fullMatch, captureGroup1, captureGroup2, ...]
+  if (matches) { 
+    // matches[1] is the hours capture group (optional)
+    // matches[2] is the minutes capture group (mandatory part of the pattern)
     
-    if (matches[1]) { // Hours part was captured
+    if (matches[1]) { // Check if hours group was captured
       hours = parseInt(matches[1], 10);
     }
-    // matches[2] should exist if matches is not null, due to the regex structure
+    // matches[2] should exist if matches is not null, based on the regex structure
     if (matches[2]) { 
       minutes = parseInt(matches[2], 10);
     }
@@ -41,6 +40,8 @@ function parseDuration(durationStr) {
       if (durationStr.trim()) {
         console.warn(`Could not parse duration string using provided regex: "${durationStr}"`);
       }
+      // Consider if a fallback or different handling is needed for strings
+      // that don't match (e.g., only hours "1 hodina")
       return undefined; // Return undefined if parsing fails
   }
 
