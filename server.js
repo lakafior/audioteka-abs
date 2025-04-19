@@ -10,6 +10,43 @@ function cleanCoverUrl(url) {
   return url;
 }
 
+function parseDuration(durationStr) {
+  if (!durationStr) return undefined;
+
+  let hours = 0;
+  let minutes = 0;
+
+  // Regex to capture hours and minutes for both Polish and Czech
+  // Handles cases like "X godzin Y minut(y)", "X hodin Y minut", "Y minut(y)", "X godzin/hodin"
+  const durationRegex = /(?:(\d+)\s+(?:godzin|hodin))?\s*(?:(\d+)\s+minut(?:y)?)?/;
+  const matches = durationStr.match(durationRegex);
+
+  if (matches) {
+    if (matches[1]) { // Hours part
+      hours = parseInt(matches[1], 10);
+    }
+    if (matches[2]) { // Minutes part
+      minutes = parseInt(matches[2], 10);
+    }
+  } else {
+     // Fallback for only minutes e.g. "10 minut"
+     const minutesOnlyRegex = /(\d+)\s+minut(?:y)?/;
+     const minutesMatch = durationStr.match(minutesOnlyRegex);
+     if (minutesMatch && minutesMatch[1]) {
+         minutes = parseInt(minutesMatch[1], 10);
+     } else {
+         console.warn(`Could not parse duration string: "${durationStr}"`);
+         return undefined; // Return undefined if parsing fails
+     }
+  }
+
+
+  if (isNaN(hours)) hours = 0;
+  if (isNaN(minutes)) minutes = 0;
+
+  return (hours * 3600) + (minutes * 60);
+}
+
 const app = express();
 const port = process.env.PORT || 3001;
 
@@ -108,9 +145,11 @@ class AudiotekaProvider {
         .join(', ');
   
       // Get duration from the "Długość" row
-      const duration = language === 'cz' 
-        ? $('tr:contains("Délka") td:last-child a').text().trim() 
+      const durationStr = language === 'cz'
+        ? $('tr:contains("Délka") td:last-child a').text().trim()
         : $('tr:contains("Długość") td:last-child a').text().trim();
+
+      const durationInSeconds = parseDuration(durationStr); // Use the parsing function
 
       // Get publisher from the "Wydawca" row
       const publisher = language === 'cz'  
@@ -163,7 +202,7 @@ class AudiotekaProvider {
         ...match,
         cover,
         narrator: narrators,
-        duration,
+        duration: durationInSeconds,
         publisher,
         description,
         type,
@@ -221,7 +260,7 @@ app.get('/search', async (req, res) => {
           sequence: undefined // Audioteka doesn't provide sequence numbers
         })) : undefined,
         language: book.languages && book.languages.length > 0 ? book.languages[0] : undefined,
-        duration: book.duration || undefined
+        duration: book.duration
       }))
     };
 
