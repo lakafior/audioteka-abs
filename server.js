@@ -144,12 +144,18 @@ class AudiotekaProvider {
         .get()
         .join(', ');
   
-      // Get duration from the "Długość" row
+      // Get duration from the "Długość"/"Délka" row - target the TD directly
       const durationStr = language === 'cz'
-        ? $('tr:contains("Délka") td:last-child a').text().trim()
-        : $('tr:contains("Długość") td:last-child a').text().trim();
+        ? $('tr:contains("Délka") td:last-child').text().trim() // Get text directly from the TD
+        : $('tr:contains("Długość") td:last-child').text().trim(); // Get text directly from the TD
+
+      // Add logging to see the extracted string
+      console.log(`Extracted duration string for ${match.title}: "${durationStr}"`); 
 
       const durationInSeconds = parseDuration(durationStr); // Use the parsing function
+
+      // Add logging to see the parsed result
+      console.log(`Parsed duration in seconds for ${match.title}: ${durationInSeconds}`); 
 
       // Get publisher from the "Wydawca" row
       const publisher = language === 'cz'  
