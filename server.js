@@ -17,36 +17,36 @@ function parseDuration(durationStr) {
   let minutes = 0;
 
   // Regex to capture hours and minutes for both Polish and Czech
-  // Handles cases like "X godzin Y minut(y)", "X hodin Y minut", "Y minut(y)", "X godzin/hodin"
-  const durationRegex = /(?:(\d+)\s+(?:godzin|hodin))?\s*(?:(\d+)\s+minut(?:y)?)?/;
+  // Added "hodina" to handle the Czech singular case for 1 hour.
+  const durationRegex = /(?:(\d+)\s+(?:godzin|godzina|hodin|hodina))?\s*(?:(\d+)\s+minut(?:y)?)?/;
   const matches = durationStr.match(durationRegex);
 
-  if (matches) {
-    if (matches[1]) { // Hours part
+  // Clearer check: Ensure matches is not null AND it captured something meaningful
+  if (matches && (matches[1] || matches[2])) {
+    if (matches[1]) { // Hours part was captured
       hours = parseInt(matches[1], 10);
     }
-    if (matches[2]) { // Minutes part
+    if (matches[2]) { // Minutes part was captured
       minutes = parseInt(matches[2], 10);
     }
   } else {
-     // Fallback for only minutes e.g. "10 minut"
-     const minutesOnlyRegex = /(\d+)\s+minut(?:y)?/;
-     const minutesMatch = durationStr.match(minutesOnlyRegex);
-     if (minutesMatch && minutesMatch[1]) {
-         minutes = parseInt(minutesMatch[1], 10);
-     } else {
-         console.warn(`Could not parse duration string: "${durationStr}"`);
-         return undefined; // Return undefined if parsing fails
-     }
+      // Log only if the primary regex failed *and* the input wasn't just whitespace
+      if (durationStr.trim()) {
+        console.warn(`Could not parse duration string using primary regex: "${durationStr}"`);
+      }
+      // No need for a fallback regex here anymore, the main one should cover minutes-only too.
+      // If primary fails, likely an unexpected format.
+      return undefined; // Return undefined if parsing fails
   }
 
-
+  // Ensure we have valid numbers, default to 0 if parseInt resulted in NaN
   if (isNaN(hours)) hours = 0;
   if (isNaN(minutes)) minutes = 0;
 
-  // Return total duration in minutes instead of seconds
+  // Return total duration in minutes
   const durationInMinutes = (hours * 60) + minutes;
-  console.log(`Parsed duration in minutes for "${durationStr}": ${durationInMinutes}`); // Log minutes
+  // Keep the log to confirm output
+  console.log(`Parsed duration in minutes for "${durationStr}": ${durationInMinutes}`);
   return durationInMinutes;
 }
 
