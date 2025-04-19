@@ -44,7 +44,10 @@ function parseDuration(durationStr) {
   if (isNaN(hours)) hours = 0;
   if (isNaN(minutes)) minutes = 0;
 
-  return (hours * 3600) + (minutes * 60);
+  // Return total duration in minutes instead of seconds
+  const durationInMinutes = (hours * 60) + minutes;
+  console.log(`Parsed duration in minutes for "${durationStr}": ${durationInMinutes}`); // Log minutes
+  return durationInMinutes;
 }
 
 const app = express();
@@ -152,10 +155,7 @@ class AudiotekaProvider {
       // Add logging to see the extracted string
       console.log(`Extracted duration string for ${match.title}: "${durationStr}"`); 
 
-      const durationInSeconds = parseDuration(durationStr); // Use the parsing function
-
-      // Add logging to see the parsed result
-      console.log(`Parsed duration in seconds for ${match.title}: ${durationInSeconds}`); 
+      const durationInMinutes = parseDuration(durationStr); // Function now returns minutes
 
       // Get publisher from the "Wydawca" row
       const publisher = language === 'cz'  
@@ -208,7 +208,7 @@ class AudiotekaProvider {
         ...match,
         cover,
         narrator: narrators,
-        duration: durationInSeconds,
+        duration: durationInMinutes, // Assign the parsed minutes value
         publisher,
         description,
         type,
@@ -266,7 +266,7 @@ app.get('/search', async (req, res) => {
           sequence: undefined // Audioteka doesn't provide sequence numbers
         })) : undefined,
         language: book.languages && book.languages.length > 0 ? book.languages[0] : undefined,
-        duration: book.duration
+        duration: book.duration // This will now be the value in minutes from getFullMetadata
       }))
     };
 
