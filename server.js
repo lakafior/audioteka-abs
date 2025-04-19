@@ -16,26 +16,31 @@ function parseDuration(durationStr) {
   let hours = 0;
   let minutes = 0;
 
-  // Regex to capture hours and minutes for both Polish and Czech
-  // Added "hodina" to handle the Czech singular case for 1 hour.
-  const durationRegex = /(?:(\d+)\s+(?:godzin|godzina|hodin|hodina))?\s*(?:(\d+)\s+minut(?:y)?)?/;
+  // Use the regex provided by the user
+  const durationRegex = /^(?:(\d+)\s+[^\d\s]+)?\s*(?:(\d+)\s+[^\d\s]+)$/gm;
+  // Reset lastIndex for global regex if used multiple times (though match doesn't strictly need it here)
+  durationRegex.lastIndex = 0; 
   const matches = durationStr.match(durationRegex);
 
-  // Clearer check: Ensure matches is not null AND it captured something meaningful
-  if (matches && (matches[1] || matches[2])) {
+  // Check if the regex matched successfully
+  if (matches) {
+    // Note: With this regex, matches[0] is the full match, 
+    // matches[1] is the hours capture group (optional), 
+    // matches[2] is the minutes capture group (mandatory if matched).
+    // We need to handle the case where hours (matches[1]) might be undefined.
+    
     if (matches[1]) { // Hours part was captured
       hours = parseInt(matches[1], 10);
     }
-    if (matches[2]) { // Minutes part was captured
+    // matches[2] should exist if matches is not null, due to the regex structure
+    if (matches[2]) { 
       minutes = parseInt(matches[2], 10);
     }
   } else {
-      // Log only if the primary regex failed *and* the input wasn't just whitespace
+      // Log if the regex failed to match
       if (durationStr.trim()) {
-        console.warn(`Could not parse duration string using primary regex: "${durationStr}"`);
+        console.warn(`Could not parse duration string using provided regex: "${durationStr}"`);
       }
-      // No need for a fallback regex here anymore, the main one should cover minutes-only too.
-      // If primary fails, likely an unexpected format.
       return undefined; // Return undefined if parsing fails
   }
 
