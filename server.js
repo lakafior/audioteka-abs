@@ -84,7 +84,7 @@ class AudiotekaProvider {
   async searchBooks(query, author = '') {
     try {
       console.log(`Searching for: "${query}" by "${author}"`);
-      const searchUrl = `${this.searchUrl}?query=${encodeURIComponent(query)}`;
+      const searchUrl = `${this.searchUrl}?phrase=${encodeURIComponent(query)}`;
       
       const response = await axios.get(searchUrl, {
         headers: {
