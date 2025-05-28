@@ -72,6 +72,7 @@ app.use((req, res, next) => {
 });
 
 const language = process.env.LANGUAGE || 'pl';  // Default to Polish if not specified
+const addAudiotekaLinkToDescription = (process.env.ADD_AUDIOTEKA_LINK_TO_DESCRIPTION || 'true').toLowerCase() === 'true';
 
 class AudiotekaProvider {
   constructor() {
@@ -197,11 +198,14 @@ class AudiotekaProvider {
         .replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '')
         .replace(/<iframe\b[^<]*(?:(?!<\/iframe>)<[^<]*)*<\/iframe>/gi, '');
 
-      // Create the HTML link
-      const audioTekaLink = `<a href="${match.url}">Audioteka link</a>`;
-
-      // Combine the link and the description
-      const description = `${audioTekaLink}<br><br>${sanitizedDescription}`;
+      let description = sanitizedDescription;
+      if (addAudiotekaLinkToDescription) {
+        // Create the HTML link
+        const audioTekaLink = `<a href="${match.url}">Audioteka link</a>`;
+        // Combine the link and the description
+        description = `${audioTekaLink}<br><br>${sanitizedDescription}`;
+        console.log(`Audioteka link will be added to the description for ${match.title}`);
+      }
 
       // Get main cover image and clean the URL
       const cover = cleanCoverUrl($('.product-top_cover__Pth8B').attr('src') || match.cover);
@@ -285,5 +289,5 @@ app.get('/search', async (req, res) => {
 });
 
 app.listen(port, () => {
-  console.log(`Audioteka provider listening on port ${port} and language is set to ${language}`);
+  console.log(`Audioteka provider listening on port ${port}, language: ${language}, add link to description: ${addAudiotekaLinkToDescription}`);
 });

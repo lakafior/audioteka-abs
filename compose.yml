@@ -5,6 +5,7 @@ services:
     container_name: audioteka-abs
     environment:
       - LANGUAGE=pl
+      - ADD_AUDIOTEKA_LINK_TO_DESCRIPTION=true # Set to false to hide the Audioteka link in the description
     restart: unless-stopped
     ports:
       - "3001:3001"

@@ -42,22 +42,14 @@ services:
     image: lakafior/audioteka-abs
     container_name: audioteka-abs
     environment:
-      - LANGUAGE=pl
+      - LANGUAGE=pl # For Czech users: Change enviorment line to - LANGUAGE=cz
+      - ADD_AUDIOTEKA_LINK_TO_DESCRIPTION=true # Optional: Set to 'false' to remove the Audioteka link from the description
     restart: unless-stopped
     ports:
       - "3001:3001"
 ```
-#### For Czech users
-Change enviorment line with language in compose.yml from
-```
-    environment:
-      - LANGUAGE=pl
-```
-to
-```
-    environment:
-      - LANGUAGE=cz
-```
+#### 
+
 2. Pull the latest Docker image:
 ```
 docker-compose pull
@@ -100,4 +92,3 @@ docker-compose logs -f
 8. Save
 
 ![obraz](https://github.com/user-attachments/assets/39ab7936-0b48-4a61-b418-840d02855522)
-
