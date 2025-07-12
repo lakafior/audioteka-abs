@@ -4,8 +4,18 @@ services:
     image: lakafior/audioteka-abs
     container_name: audioteka-abs
     environment:
-      - LANGUAGE=pl
+      - LANGUAGE=cz
       - ADD_AUDIOTEKA_LINK_TO_DESCRIPTION=true # Set to false to hide the Audioteka link in the description
     restart: unless-stopped
     ports:
       - "3001:3001"
+  audiobookshelf:
+    image: ghcr.io/advplyr/audiobookshelf:latest
+    ports:
+      - 13378:80
+    volumes:
+      - ./audiobooks:/audiobooks
+      - ./podcasts:/podcasts
+      - ./metadata:/metadata
+      - ./config:/config
+    restart: unless-stopped
