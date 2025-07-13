@@ -144,40 +144,63 @@ class AudiotekaProvider {
       const response = await axios.get(match.url);
       const $ = cheerio.load(response.data);
 
-      // Get narrator - updated selectors for both sites
+      // Get narrator - updated selectors for Czech site
       const narrators = language === 'cz' 
-        ? $('.product-details tr:contains("Interpret"), .product-details tr:contains("Čte")').find('td:last-child').text().trim()
-        : $('.product-table tr:contains("Głosy") td:last-child a, .product-details tr:contains("Głosy") td:last-child a')
+        ? $('tr').filter(function() {
+            const text = $(this).find('td:first-child').text().trim();
+            return text === 'Interpret' || text === 'Čte';
+          }).find('td:last-child').text().trim()
+        : $('.product-table tr:contains("Głosy") td:last-child a')
           .map((i, el) => $(el).text().trim())
           .get()
-          .join(', ') || $('.product-table tr:contains("Głosy") td:last-child, .product-details tr:contains("Głosy") td:last-child').text().trim();
+          .join(', ') || $('.product-table tr:contains("Głosy") td:last-child').text().trim();
 
-      // Get duration - updated selectors for both sites
+      // Get duration - updated selectors for Czech site
       const durationStr = language === 'cz'
-        ? $('.product-details tr:contains("Délka"), .product-details tr:contains("Stopáž")').find('td:last-child').text().trim()
-        : $('.product-table tr:contains("Długość") td:last-child, .product-details tr:contains("Długość") td:last-child').text().trim();
+        ? $('tr').filter(function() {
+            const text = $(this).find('td:first-child').text().trim();
+            return text === 'Délka' || text === 'Stopáž';
+          }).find('td:last-child').text().trim()
+        : $('.product-table tr:contains("Długość") td:last-child').text().trim();
 
       console.log(`Extracted duration string for ${match.title}: "${durationStr}"`); 
 
       const durationInMinutes = parseDuration(durationStr);
 
-      // Get publisher - updated selectors for both sites
+      // Get publisher - updated selectors for Czech site
       const publisher = language === 'cz'  
-        ? $('.product-details tr:contains("Vydavatel"), .product-details tr:contains("Nakladatel")').find('td:last-child').text().trim()
-        : $('.product-table tr:contains("Wydawca") td:last-child a, .product-details tr:contains("Wydawca") td:last-child a').text().trim() ||
-          $('.product-table tr:contains("Wydawca") td:last-child, .product-details tr:contains("Wydawca") td:last-child').text().trim();
+        ? $('tr').filter(function() {
+            const text = $(this).find('td:first-child').text().trim();
+            return text === 'Vydavatel' || text === 'Nakladatel';
+          }).find('td:last-child').text().trim()
+        : $('.product-table tr:contains("Wydawca") td:last-child a').text().trim() ||
+          $('.product-table tr:contains("Wydawca") td:last-child').text().trim();
 
-      // Get type - updated selectors for both sites
+      // Get type - updated selectors for Czech site
       const type = language === 'cz' 
-        ? $('.product-details tr:contains("Typ")').find('td:last-child').text().trim()
-        : $('.product-table tr:contains("Typ") td:last-child, .product-details tr:contains("Typ") td:last-child').text().trim();
+        ? $('tr').filter(function() {
+            const text = $(this).find('td:first-child').text().trim();
+            return text === 'Typ';
+          }).find('td:last-child').text().trim()
+        : $('.product-table tr:contains("Typ") td:last-child').text().trim();
 
-      // Get categories/genres - updated selectors for both sites
+      // Get language - Czech specific
+      const bookLanguage = language === 'cz'
+        ? $('tr').filter(function() {
+            const text = $(this).find('td:first-child').text().trim();
+            return text === 'Jazyk';
+          }).find('td:last-child').text().trim()
+        : null;
+
+      // Get categories/genres - updated selectors for Czech site
       const genres = language === 'cz'
-        ? $('.product-details tr:contains("Kategorie"), .product-details tr:contains("Žánr")').find('td:last-child a')
+        ? $('tr').filter(function() {
+            const text = $(this).find('td:first-child').text().trim();
+            return text === 'Kategorie' || text === 'Žánr';
+          }).find('td:last-child a')
             .map((i, el) => $(el).text().trim())
             .get()
-        : $('.product-table tr:contains("Kategoria") td:last-child a, .product-details tr:contains("Kategoria") td:last-child a')
+        : $('.product-table tr:contains("Kategoria") td:last-child a')
             .map((i, el) => $(el).text().trim())
             .get();
 
