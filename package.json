@@ -1,6 +1,7 @@
 {
   "name": "audioteka-provider",
-  "version": "1.2.0",
+  "version": "1.2.1",
+  "description": "Audioteka provider",
   "main": "server.js",
   "scripts": {
     "build": "esbuild server.js --platform=node --bundle --outdir=dist"

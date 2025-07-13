@@ -88,7 +88,8 @@ class AudiotekaProvider {
       const searchUrl = `${this.searchUrl}?phrase=${encodeURIComponent(query)}`;
       
       const response = await axios.get(searchUrl, {
-        headers: {
+        headers:
+         {
           'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
           'Accept-Language': language === 'cz' ? 'cs-CZ' : 'pl-PL'
         }
@@ -143,82 +144,81 @@ class AudiotekaProvider {
       const response = await axios.get(match.url);
       const $ = cheerio.load(response.data);
 
-      // Get narrator from the "Głosy" row in the details table
+      // Get narrator - updated selectors for both sites
       const narrators = language === 'cz' 
-      ? $('tr:contains("Interpret") td:last-child a')
-        .map((i, el) => $(el).text().trim())
-        .get()
-        .join(', ')
-      : $('tr:contains("Głosy") td:last-child a')
-        .map((i, el) => $(el).text().trim())
-        .get()
-        .join(', ');
-  
-      // Get duration from the "Długość"/"Délka" row - target the TD directly
-      const durationStr = language === 'cz'
-        ? $('tr:contains("Délka") td:last-child').text().trim() // Get text directly from the TD
-        : $('tr:contains("Długość") td:last-child').text().trim(); // Get text directly from the TD
+        ? $('.product-details tr:contains("Interpret"), .product-details tr:contains("Čte")').find('td:last-child').text().trim()
+        : $('.product-table tr:contains("Głosy") td:last-child a, .product-details tr:contains("Głosy") td:last-child a')
+          .map((i, el) => $(el).text().trim())
+          .get()
+          .join(', ') || $('.product-table tr:contains("Głosy") td:last-child, .product-details tr:contains("Głosy") td:last-child').text().trim();
 
-      // Add logging to see the extracted string
+      // Get duration - updated selectors for both sites
+      const durationStr = language === 'cz'
+        ? $('.product-details tr:contains("Délka"), .product-details tr:contains("Stopáž")').find('td:last-child').text().trim()
+        : $('.product-table tr:contains("Długość") td:last-child, .product-details tr:contains("Długość") td:last-child').text().trim();
+
       console.log(`Extracted duration string for ${match.title}: "${durationStr}"`); 
 
-      const durationInMinutes = parseDuration(durationStr); // Function now returns minutes
+      const durationInMinutes = parseDuration(durationStr);
 
-      // Get publisher from the "Wydawca" row
+      // Get publisher - updated selectors for both sites
       const publisher = language === 'cz'  
-        ? $('tr:contains("Vydavatel") td:last-child a').text().trim()
-        : $('tr:contains("Wydawca") td:last-child a').text().trim();
+        ? $('.product-details tr:contains("Vydavatel"), .product-details tr:contains("Nakladatel")').find('td:last-child').text().trim()
+        : $('.product-table tr:contains("Wydawca") td:last-child a, .product-details tr:contains("Wydawca") td:last-child a').text().trim() ||
+          $('.product-table tr:contains("Wydawca") td:last-child, .product-details tr:contains("Wydawca") td:last-child').text().trim();
 
-      // Get type from the "Typ" row
+      // Get type - updated selectors for both sites
       const type = language === 'cz' 
-        ? $('tr:contains("Typ") td:last-child').text().trim()
-        : $('tr:contains("Typ") td:last-child').text().trim()
+        ? $('.product-details tr:contains("Typ")').find('td:last-child').text().trim()
+        : $('.product-table tr:contains("Typ") td:last-child, .product-details tr:contains("Typ") td:last-child').text().trim();
 
-      // Get categories/genres
+      // Get categories/genres - updated selectors for both sites
       const genres = language === 'cz'
-        ? $('tr:contains("Kategorie") td:last-child a')
+        ? $('.product-details tr:contains("Kategorie"), .product-details tr:contains("Žánr")').find('td:last-child a')
             .map((i, el) => $(el).text().trim())
-            .get(): $('tr:contains("Kategoria") td:last-child a')
+            .get()
+        : $('.product-table tr:contains("Kategoria") td:last-child a, .product-details tr:contains("Kategoria") td:last-child a')
             .map((i, el) => $(el).text().trim())
             .get();
 
-      // Get series information
-      const series = $('.collections_list__09q3I li a')
+      // Get series information - updated selectors
+      const series = $('.collections_list__09q3I li a, .product-series a, .series-info a, .product-table tr:contains("Seria") td:last-child a')
         .map((i, el) => $(el).text().trim())
         .get();
 
-      // Get rating
-      const rating = parseFloat($('.StarIcon__Label-sc-6cf2a375-2').text().trim()) || null;
+      // Get rating - try multiple selectors for rating
+      const rating = parseFloat($('.StarIcon__Label-sc-6cf2a375-2, .rating-value, .product-rating .value, .rating .value').text().trim()) || 
+                     parseFloat($('[class*="rating"]').text().trim()) || null;
       
-      // Get description with HTML
-      const descriptionHtml = $('.description_description__6gcfq').html();
+      // Get description with HTML - updated selectors for both sites
+      const descriptionHtml = $('.description_description__6gcfq, .product-description, .book-description, .product-desc').html();
       
-      // Basic sanitization (you might want to use a proper HTML sanitizer library for production)
+      // Basic sanitization
       const sanitizedDescription = descriptionHtml
-        .replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '')
-        .replace(/<iframe\b[^<]*(?:(?!<\/iframe>)<[^<]*)*<\/iframe>/gi, '');
+        ? descriptionHtml
+            .replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '')
+            .replace(/<iframe\b[^<]*(?:(?!<\/iframe>)<[^<]*)*<\/iframe>/gi, '')
+        : '';
 
       let description = sanitizedDescription;
       if (addAudiotekaLinkToDescription) {
-        // Create the HTML link
         const audioTekaLink = `<a href="${match.url}">Audioteka link</a>`;
-        // Combine the link and the description
         description = `${audioTekaLink}<br><br>${sanitizedDescription}`;
         console.log(`Audioteka link will be added to the description for ${match.title}`);
       }
 
-      // Get main cover image and clean the URL
-      const cover = cleanCoverUrl($('.product-top_cover__Pth8B').attr('src') || match.cover);
+      // Get main cover image - updated selectors for both sites
+      const cover = cleanCoverUrl($('.product-top_cover__Pth8B, .product-cover img, .book-cover img, .product-image img').attr('src') || match.cover);
 
       const languages = language === 'cz' 
-      ? ['czech'] 
-      : ['polish']
+        ? ['czech'] 
+        : ['polish'];
 
       const fullMetadata = {
         ...match,
         cover,
         narrator: narrators,
-        duration: durationInMinutes, // Assign the parsed minutes value
+        duration: durationInMinutes,
         publisher,
         description,
         type,
@@ -236,7 +236,6 @@ class AudiotekaProvider {
       return fullMetadata;
     } catch (error) {
       console.error(`Error fetching full metadata for ${match.title}:`, error.message, error.stack);
-      // Return basic metadata if full metadata fetch fails
       return match;
     }
   }
