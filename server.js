@@ -131,7 +131,13 @@ class AudiotekaProvider {
       });
 
       const fullMetadata = await Promise.all(matches.map(match => this.getFullMetadata(match)));
-      return { matches: fullMetadata };
+      
+      // Filter out null results (non-Czech books for Czech users)
+      const filteredMetadata = fullMetadata.filter(book => book !== null);
+      
+      console.log(`Filtered ${fullMetadata.length - filteredMetadata.length} non-Czech books`);
+      
+      return { matches: filteredMetadata };
     } catch (error) {
       console.error('Error searching books:', error.message, error.stack);
       return { matches: [] };
@@ -144,9 +150,23 @@ class AudiotekaProvider {
       const response = await axios.get(match.url);
       const $ = cheerio.load(response.data);
 
+      // Get language first for Czech filtering
+      const bookLanguage = language === 'cz'
+        ? $('table tr').filter(function() {
+            const text = $(this).find('td:first-child').text().trim();
+            return text === 'Jazyk';
+          }).find('td:last-child').text().trim()
+        : null;
+
+      // Filter out non-Czech books for Czech users
+      if (language === 'cz' && bookLanguage && !bookLanguage.toLowerCase().includes('čeština')) {
+        console.log(`Filtering out ${match.title} - language is "${bookLanguage}", not Czech`);
+        return null; // Return null to filter this book out
+      }
+
       // Get narrator - updated selectors for Czech site
       const narrators = language === 'cz' 
-        ? $('tr').filter(function() {
+        ? $('table tr').filter(function() {
             const text = $(this).find('td:first-child').text().trim();
             return text === 'Interpret' || text === 'Čte';
           }).find('td:last-child').text().trim()
@@ -157,7 +177,7 @@ class AudiotekaProvider {
 
       // Get duration - updated selectors for Czech site
       const durationStr = language === 'cz'
-        ? $('tr').filter(function() {
+        ? $('table tr').filter(function() {
             const text = $(this).find('td:first-child').text().trim();
             return text === 'Délka' || text === 'Stopáž';
           }).find('td:last-child').text().trim()
@@ -169,7 +189,7 @@ class AudiotekaProvider {
 
       // Get publisher - updated selectors for Czech site
       const publisher = language === 'cz'  
-        ? $('tr').filter(function() {
+        ? $('table tr').filter(function() {
             const text = $(this).find('td:first-child').text().trim();
             return text === 'Vydavatel' || text === 'Nakladatel';
           }).find('td:last-child').text().trim()
@@ -178,23 +198,15 @@ class AudiotekaProvider {
 
       // Get type - updated selectors for Czech site
       const type = language === 'cz' 
-        ? $('tr').filter(function() {
+        ? $('table tr').filter(function() {
             const text = $(this).find('td:first-child').text().trim();
             return text === 'Typ';
           }).find('td:last-child').text().trim()
         : $('.product-table tr:contains("Typ") td:last-child').text().trim();
 
-      // Get language - Czech specific
-      const bookLanguage = language === 'cz'
-        ? $('tr').filter(function() {
-            const text = $(this).find('td:first-child').text().trim();
-            return text === 'Jazyk';
-          }).find('td:last-child').text().trim()
-        : null;
-
       // Get categories/genres - updated selectors for Czech site
       const genres = language === 'cz'
-        ? $('tr').filter(function() {
+        ? $('table tr').filter(function() {
             const text = $(this).find('td:first-child').text().trim();
             return text === 'Kategorie' || text === 'Žánr';
           }).find('td:last-child a')
