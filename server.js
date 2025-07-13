@@ -143,78 +143,265 @@ class AudiotekaProvider {
       return { matches: [] };
     }
   }
-
   async getFullMetadata(match) {
     try {
       console.log(`Fetching full metadata for: ${match.title}`);
       const response = await axios.get(match.url);
       const $ = cheerio.load(response.data);
 
-      // Get language first for Czech filtering
-      const bookLanguage = language === 'cz'
-        ? $('table tr').filter(function() {
-            const text = $(this).find('td:first-child').text().trim();
-            return text === 'Jazyk';
-          }).find('td:last-child').text().trim()
-        : null;
+      // Debug: Log all table rows to see the actual structure
+      console.log('=== DEBUG: All table rows ===');
+      $('table tr').each((i, el) => {
+        const firstCell = $(el).find('td:first-child').text().trim();
+        const lastCell = $(el).find('td:last-child').text().trim();
+        console.log(`Row ${i}: "${firstCell}" -> "${lastCell}"`);
+      });
+
+      // Debug: Try different div structures for Czech site
+      console.log('=== DEBUG: Trying different selectors ===');
+      console.log('All tables count:', $('table').length);
+      console.log('All tr count:', $('tr').length);
+      console.log('All td count:', $('td').length);
+      
+      // Debug: Look for different structures
+      console.log('=== DEBUG: Looking for dt/dd structure ===');
+      $('dt, dd').each((i, el) => {
+        console.log(`dt/dd ${i}: "${$(el).text().trim()}"`);
+      });      // Get narrator - improved selectors for Czech site
+      let narrators = '';
+      if (language === 'cz') {
+        // Try multiple selector approaches for Czech site
+        let narratorCell = $('table tr').filter(function() {
+          const text = $(this).find('td:first-child').text().trim();
+          return text === 'Interpret' || text === 'Čte';
+        }).find('td:last-child');
+        
+        // Check if there are individual links for narrators
+        const narratorLinks = narratorCell.find('a');
+        if (narratorLinks.length > 0) {
+          narrators = narratorLinks.map((i, el) => $(el).text().trim()).get().join(', ');
+        } else {
+          narrators = narratorCell.text().trim();
+        }
+        
+        // Fallback: try dt/dd structure
+        if (!narrators) {
+          $('dt').each((i, el) => {
+            const text = $(el).text().trim();
+            if (text === 'Interpret' || text === 'Čte') {
+              const ddElement = $(el).next('dd');
+              const ddLinks = ddElement.find('a');
+              if (ddLinks.length > 0) {
+                narrators = ddLinks.map((i, el) => $(el).text().trim()).get().join(', ');
+              } else {
+                narrators = ddElement.text().trim();
+              }
+            }
+          });
+        }
+        
+        // Fallback: try div structure
+        if (!narrators) {
+          const narratorDiv = $('.product-detail-item').filter(function() {
+            return $(this).find('.label').text().trim() === 'Interpret' || 
+                   $(this).find('.label').text().trim() === 'Čte';
+          }).find('.value');
+          
+          const divLinks = narratorDiv.find('a');
+          if (divLinks.length > 0) {
+            narrators = divLinks.map((i, el) => $(el).text().trim()).get().join(', ');
+          } else {
+            narrators = narratorDiv.text().trim();
+          }
+        }
+        
+        // If we still have concatenated names without separators, try to add commas
+        if (narrators && !narrators.includes(',') && narrators.match(/[A-ZÁČĎÉĚÍŇÓŘŠŤÚŮÝŽ][a-záčďéěíňóřšťúůýž]+[A-ZÁČĎÉĚÍŇÓŘŠŤÚŮÝŽ]/)) {
+          // Split on capital letters that follow lowercase letters (indicating new names)
+          narrators = narrators.replace(/([a-záčďéěíňóřšťúůýž])([A-ZÁČĎÉĚÍŇÓŘŠŤÚŮÝŽ])/g, '$1, $2');
+        }
+        
+        console.log(`Narrator extracted: "${narrators}"`);
+      } else {
+        narrators = $('.product-table tr:contains("Głosy") td:last-child a')
+          .map((i, el) => $(el).text().trim())
+          .get()
+          .join(', ') || $('.product-table tr:contains("Głosy") td:last-child').text().trim();
+      }
+
+      // Get duration - improved selectors for Czech site
+      let durationStr = '';
+      if (language === 'cz') {
+        // Try multiple selector approaches for Czech site
+        durationStr = $('table tr').filter(function() {
+          const text = $(this).find('td:first-child').text().trim();
+          return text === 'Délka' || text === 'Stopáž';
+        }).find('td:last-child').text().trim();
+        
+        // Fallback: try dt/dd structure
+        if (!durationStr) {
+          $('dt').each((i, el) => {
+            const text = $(el).text().trim();
+            if (text === 'Délka' || text === 'Stopáž') {
+              durationStr = $(el).next('dd').text().trim();
+            }
+          });
+        }
+        
+        // Fallback: try div structure
+        if (!durationStr) {
+          durationStr = $('.product-detail-item').filter(function() {
+            return $(this).find('.label').text().trim() === 'Délka' || 
+                   $(this).find('.label').text().trim() === 'Stopáž';
+          }).find('.value').text().trim();
+        }
+        
+        console.log(`Duration extracted: "${durationStr}"`);
+      } else {
+        durationStr = $('.product-table tr:contains("Długość") td:last-child').text().trim();
+      }
+
+      const durationInMinutes = parseDuration(durationStr);
+
+      // Get publisher - improved selectors for Czech site
+      let publisher = '';
+      if (language === 'cz') {
+        // Try multiple selector approaches for Czech site
+        publisher = $('table tr').filter(function() {
+          const text = $(this).find('td:first-child').text().trim();
+          return text === 'Vydavatel' || text === 'Nakladatel';
+        }).find('td:last-child').text().trim();
+        
+        // Fallback: try dt/dd structure
+        if (!publisher) {
+          $('dt').each((i, el) => {
+            const text = $(el).text().trim();
+            if (text === 'Vydavatel' || text === 'Nakladatel') {
+              publisher = $(el).next('dd').text().trim();
+            }
+          });
+        }
+        
+        // Fallback: try div structure
+        if (!publisher) {
+          publisher = $('.product-detail-item').filter(function() {
+            return $(this).find('.label').text().trim() === 'Vydavatel' || 
+                   $(this).find('.label').text().trim() === 'Nakladatel';
+          }).find('.value').text().trim();
+        }
+        
+        console.log(`Publisher extracted: "${publisher}"`);
+      } else {
+        publisher = $('.product-table tr:contains("Wydawca") td:last-child a').text().trim() ||
+                    $('.product-table tr:contains("Wydawca") td:last-child').text().trim();
+      }
+
+      // Get type - improved selectors for Czech site
+      let type = '';
+      if (language === 'cz') {
+        // Try multiple selector approaches for Czech site
+        type = $('table tr').filter(function() {
+          const text = $(this).find('td:first-child').text().trim();
+          return text === 'Typ';
+        }).find('td:last-child').text().trim();
+        
+        // Fallback: try dt/dd structure
+        if (!type) {
+          $('dt').each((i, el) => {
+            const text = $(el).text().trim();
+            if (text === 'Typ') {
+              type = $(el).next('dd').text().trim();
+            }
+          });
+        }
+        
+        // Fallback: try div structure
+        if (!type) {
+          type = $('.product-detail-item').filter(function() {
+            return $(this).find('.label').text().trim() === 'Typ';
+          }).find('.value').text().trim();
+        }
+        
+        console.log(`Type extracted: "${type}"`);
+      } else {
+        type = $('.product-table tr:contains("Typ") td:last-child').text().trim();
+      }
+
+      // Get categories/genres - improved selectors for Czech site
+      let genres = [];
+      if (language === 'cz') {
+        // Try multiple selector approaches for Czech site
+        genres = $('table tr').filter(function() {
+          const text = $(this).find('td:first-child').text().trim();
+          return text === 'Kategorie' || text === 'Žánr';
+        }).find('td:last-child a')
+          .map((i, el) => $(el).text().trim())
+          .get();
+        
+        // Fallback: try dt/dd structure
+        if (genres.length === 0) {
+          $('dt').each((i, el) => {
+            const text = $(el).text().trim();
+            if (text === 'Kategorie' || text === 'Žánr') {
+              genres = $(el).next('dd').find('a')
+                .map((i, el) => $(el).text().trim())
+                .get();
+            }
+          });
+        }
+        
+        // Fallback: try div structure
+        if (genres.length === 0) {
+          genres = $('.product-detail-item').filter(function() {
+            return $(this).find('.label').text().trim() === 'Kategorie' || 
+                   $(this).find('.label').text().trim() === 'Žánr';
+          }).find('.value a')
+            .map((i, el) => $(el).text().trim())
+            .get();
+        }
+        
+        console.log(`Genres extracted: ${JSON.stringify(genres)}`);
+      } else {
+        genres = $('.product-table tr:contains("Kategoria") td:last-child a')
+          .map((i, el) => $(el).text().trim())
+          .get();
+      }
+
+      // Get language - improved selectors for Czech site
+      const bookLanguage = language === 'cz' ? (() => {
+        // Try multiple selector approaches for Czech site
+        let lang = $('table tr').filter(function() {
+          const text = $(this).find('td:first-child').text().trim();
+          return text === 'Jazyk';
+        }).find('td:last-child').text().trim();
+        
+        // Fallback: try dt/dd structure
+        if (!lang) {
+          $('dt').each((i, el) => {
+            const text = $(el).text().trim();
+            if (text === 'Jazyk') {
+              lang = $(el).next('dd').text().trim();
+            }
+          });
+        }
+        
+        // Fallback: try div structure
+        if (!lang) {
+          lang = $('.product-detail-item').filter(function() {
+            return $(this).find('.label').text().trim() === 'Jazyk';
+          }).find('.value').text().trim();
+        }
+        
+        return lang;
+      })() : null;
+
+      console.log(`Book language found: "${bookLanguage}"`);
 
       // Filter out non-Czech books for Czech users
       if (language === 'cz' && bookLanguage && !bookLanguage.toLowerCase().includes('čeština')) {
         console.log(`Filtering out ${match.title} - language is "${bookLanguage}", not Czech`);
-        return null; // Return null to filter this book out
+        return null;
       }
-
-      // Get narrator - updated selectors for Czech site
-      const narrators = language === 'cz' 
-        ? $('table tr').filter(function() {
-            const text = $(this).find('td:first-child').text().trim();
-            return text === 'Interpret' || text === 'Čte';
-          }).find('td:last-child').text().trim()
-        : $('.product-table tr:contains("Głosy") td:last-child a')
-          .map((i, el) => $(el).text().trim())
-          .get()
-          .join(', ') || $('.product-table tr:contains("Głosy") td:last-child').text().trim();
-
-      // Get duration - updated selectors for Czech site
-      const durationStr = language === 'cz'
-        ? $('table tr').filter(function() {
-            const text = $(this).find('td:first-child').text().trim();
-            return text === 'Délka' || text === 'Stopáž';
-          }).find('td:last-child').text().trim()
-        : $('.product-table tr:contains("Długość") td:last-child').text().trim();
-
-      console.log(`Extracted duration string for ${match.title}: "${durationStr}"`); 
-
-      const durationInMinutes = parseDuration(durationStr);
-
-      // Get publisher - updated selectors for Czech site
-      const publisher = language === 'cz'  
-        ? $('table tr').filter(function() {
-            const text = $(this).find('td:first-child').text().trim();
-            return text === 'Vydavatel' || text === 'Nakladatel';
-          }).find('td:last-child').text().trim()
-        : $('.product-table tr:contains("Wydawca") td:last-child a').text().trim() ||
-          $('.product-table tr:contains("Wydawca") td:last-child').text().trim();
-
-      // Get type - updated selectors for Czech site
-      const type = language === 'cz' 
-        ? $('table tr').filter(function() {
-            const text = $(this).find('td:first-child').text().trim();
-            return text === 'Typ';
-          }).find('td:last-child').text().trim()
-        : $('.product-table tr:contains("Typ") td:last-child').text().trim();
-
-      // Get categories/genres - updated selectors for Czech site
-      const genres = language === 'cz'
-        ? $('table tr').filter(function() {
-            const text = $(this).find('td:first-child').text().trim();
-            return text === 'Kategorie' || text === 'Žánr';
-          }).find('td:last-child a')
-            .map((i, el) => $(el).text().trim())
-            .get()
-        : $('.product-table tr:contains("Kategoria") td:last-child a')
-            .map((i, el) => $(el).text().trim())
-            .get();
 
       // Get series information - updated selectors
       const series = $('.collections_list__09q3I li a, .product-series a, .series-info a, .product-table tr:contains("Seria") td:last-child a')
