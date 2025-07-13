@@ -223,10 +223,34 @@ class AudiotekaProvider {
         
         console.log(`Narrator extracted: "${narrators}"`);
       } else {
-        narrators = $('.product-table tr:contains("Głosy") td:last-child a')
-          .map((i, el) => $(el).text().trim())
-          .get()
-          .join(', ') || $('.product-table tr:contains("Głosy") td:last-child').text().trim();
+        // Polish site narrator extraction
+        let narratorCell = $('dt').filter(function() {
+          return $(this).text().trim() === 'Głosy';
+        }).next('dd');
+        
+        // Check if there are individual links for narrators
+        const narratorLinks = narratorCell.find('a');
+        if (narratorLinks.length > 0) {
+          narrators = narratorLinks.map((i, el) => $(el).text().trim()).get().join(', ');
+        } else {
+          narrators = narratorCell.text().trim();
+        }
+        
+        // Fallback: try table structure
+        if (!narrators) {
+          narrators = $('.product-table tr:contains("Głosy") td:last-child a')
+            .map((i, el) => $(el).text().trim())
+            .get()
+            .join(', ') || $('.product-table tr:contains("Głosy") td:last-child').text().trim();
+        }
+        
+        // If we still have concatenated names without separators, try to add commas
+        if (narrators && !narrators.includes(',') && narrators.match(/[A-ZĄĆĘŁŃÓŚŹŻ][a-ząćęłńóśźż]+[A-ZĄĆĘŁŃÓŚŹŻ]/)) {
+          // Split on capital letters that follow lowercase letters (indicating new names)
+          narrators = narrators.replace(/([a-ząćęłńóśźż])([A-ZĄĆĘŁŃÓŚŹŻ])/g, '$1, $2');
+        }
+        
+        console.log(`Narrator extracted: "${narrators}"`);
       }
 
       // Get duration - improved selectors for Czech site
